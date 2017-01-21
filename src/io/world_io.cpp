@@ -17,7 +17,7 @@ void save_world(World& world, std::string file_name) {
     ofstream save_file;
     Table& table = world.GetCurrentTable();
     
-    save_file.open(file_name, ios::binary);
+    save_file.open(file_name + ".atonw", ios::binary);
 
     save_file.write((const char*)&table.width, sizeof(table.width));
     save_file.write((const char*)&table.height, sizeof(table.height));
@@ -44,7 +44,7 @@ void save_world(World& world, std::string file_name) {
 
 void load_world(World& world, std::string file_name) {
     ifstream file;
-    file.open(file_name, ios::binary);
+    file.open(file_name + ".atonw", ios::binary);
 
     file.seekg(0, file.end);
     int length = file.tellg();
@@ -62,15 +62,14 @@ void load_world(World& world, std::string file_name) {
 
     unsigned int offset = 8;
     for (unsigned int i = offset; i < world_len+offset; i++) {
-        std::cout << (unsigned int)buffer[i];
         table.GetCellState(i-8) = static_cast<uint8_t>(buffer[i]);
     }
 
     offset += world_len;
     for (unsigned int i = offset; i < 256*3+offset; i += 3) {
-        world.colors[i-world_len][0] = static_cast<uint8_t>(buffer[i]);
-        world.colors[i-world_len][1] = static_cast<uint8_t>(buffer[i+1]);
-        world.colors[i-world_len][2] = static_cast<uint8_t>(buffer[i+2]);
+        world.colors[i-offset][0] = static_cast<uint8_t>(buffer[i]);
+        world.colors[i-offset][1] = static_cast<uint8_t>(buffer[i+1]);
+        world.colors[i-offset][2] = static_cast<uint8_t>(buffer[i+2]);
     }
     
     delete buffer;

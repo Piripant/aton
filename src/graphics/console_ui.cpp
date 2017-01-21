@@ -47,12 +47,12 @@ command COMMANDS[COMMANDS_NUM] = {
     command {"cmdhelp", "takes 1 parameter {cmd_name}", "prints the help of the command {cmd_name}", 1, &print_cmd_help},
     command {"setstate", "takes 3 parameters {x} {y} {new_state}", "sets the state of {x} {y} to {new_state}", 3, &set_state},
     command {"prnstate", "takes 2 parameters {x} {y}", "prints the state of the cell at {x}, {y}", 2, &print_state},
-    command {"prnsptstates", "takes 0 parameters", "prints the number of states use by the current script", 0, &print_script_states},
+    command {"maxscriptstate", "takes 0 parameters", "prints the number of states use by the current script", 0, &print_script_states},
     command {"step", "takes 2 parameters {n} {t}", "simulates {n} steps with a interval of {t} in milliseconds", 2, &step},
     command {"prnworld", "takes 0 parameters", "prints a graphical rapresentation of the world on the terminal", 0, &print_world},
     command {"prnworldsize", "takes 0 parameters", "prints the world size", 0, &print_world_size},
     command {"rstworld", "takes 3 parameters {width} {height} {state}", "sets the world to {width}x{height} and all the cells to {state}", 3, &reset_world},
-    command {"setstateclr", "takes 4 parameters {state} {r} {g} {b}", "sets the {state} color to {r} {g} {b}", 4, &set_state_color},
+    command {"setcolor", "takes 4 parameters {state} {r} {g} {b}", "sets the {state} color to {r} {g} {b}", 4, &set_state_color},
     command {"saveworld", "takes 1 parameter {file_name}", "saves the world in {file_name}", 1, &save_world_cmd},
     command {"loadworld", "takes 1 parameter {file_name}", "load the world in {file_name}", 1, &load_world_cmd}
 };
