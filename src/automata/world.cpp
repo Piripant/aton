@@ -7,17 +7,20 @@
 #include "../lua/lua.hpp"
 #include "../utils/lua_utils.h"
 
-World::World(unsigned int threads, uint8_t state, unsigned int height, unsigned int width)
+World::World(unsigned int threads, uint8_t state, unsigned int width, unsigned int height)
 {
 	this->threads_num = threads;
-	this->tables[0] = Table(state, height, width);
-	this->tables[1] = Table(state, height, width);
+	this->tables[0] = Table(state, width, height);
+	this->tables[1] = Table(state, width, height);
 	this->cur_table = 0;
+
+	// TODO: make so that this array is only for the overwritten colors
+	this->colors = new std::array<uint8_t, 3>[256];
 }
 
-void World::Resize(uint8_t state, unsigned int height, unsigned int width) {
-	this->tables[0] = Table(state, height, width);
-	this->tables[1] = Table(state, height, width);
+void World::Resize(uint8_t state, unsigned int width, unsigned int height) {
+	this->tables[0] = Table(state, width, height);
+	this->tables[1] = Table(state, width, height);
 }
 
 Table& World::GetCurrentTable() {
@@ -41,16 +44,34 @@ void World::StepThread(unsigned int start) {
 		uint8_t& cell_state = curr_table.GetCellState(i);
 		uint8_t& future_cell_state = future_table.GetCellState(i);
 
+		// If the cell_state is invalid in the script, make the cell stay the original state
+		if (cell_state > script_states) {
+			future_cell_state = cell_state;
+			continue;
+		}
+
+		bool valid_neighbors = true;
 		unsigned int rule_index = cell_state * neigh_comb_num;
 		for (unsigned int j = 0; j < this->neighbors_num; j++) {
 			#define x_index (((int)i % (int)width - neighbors[j][0] + (int)width) % (int)width)
 			#define y_index (((int)i / (int)width - neighbors[j][1] + (int)height) % (int)height) * (int)width
 			unsigned int neig_index = x_index + y_index;
-			
+
 			uint8_t& neig_cell_state = curr_table.GetCellState(neig_index);
-			rule_index += neig_cell_state * pow(states_num, j);
+			if (neig_cell_state > script_states) { // If the neighbor cell state is invalid in the script, skip this cell
+				valid_neighbors = false; 
+				break;
+			}
+			rule_index += neig_cell_state * pow(script_states, j);
 		}
 
+		// If the neighbors had invalid states for the script, make the cell stay the original state
+		if (!valid_neighbors) {
+			future_cell_state = cell_state;
+			continue;
+		}
+
+		// The cell states and the neighbors states are all valid
 		future_cell_state = this->rules[rule_index];
 	}
 }
@@ -82,7 +103,6 @@ void World::LoadFromFile(char *file_name) {
 
 	SetNeighborsFromLua(L);
 	SetRules(L);
-	SetColors(L);
 
 	lua_close(L);
 }
@@ -104,15 +124,15 @@ uint8_t calculate_output_state(lua_State *L, uint8_t *combination, unsigned int 
 
 void World::SetRules(lua_State *L) {
 	lua_getglobal(L, "STATES_NUM");
-	this->states_num = lua_tointeger(L, -1);
+	this->script_states = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	this->neigh_comb_num = pow(states_num, neighbors_num);
-	this->rules_num = pow(states_num, neighbors_num + 1);
+	this->neigh_comb_num = pow(script_states, neighbors_num);
+	this->rules_num = pow(script_states, neighbors_num + 1);
 
 	this->rules = new uint8_t[rules_num];
 	uint8_t combination[neighbors_num]; // To store the actual combination of states
-	for (uint8_t input_state = 0; input_state < states_num; input_state++) {
+	for (uint8_t input_state = 0; input_state < script_states; input_state++) {
 		// Reset the combination
 		for (unsigned int i = 0; i < neighbors_num; i++) {
 			combination[i] = 0;
@@ -125,7 +145,7 @@ void World::SetRules(lua_State *L) {
 			
 			// The last doesn't need to be incremented
 			if (i < neigh_comb_num - 1) {
-				increment_number(neighbors_num, states_num, combination);
+				increment_number(neighbors_num, script_states, combination);
 			}
 		}
 	}
@@ -150,10 +170,11 @@ void World::SetNeighborsFromLua(lua_State *L) {
 	}
 }
 
+/*
 void World::SetColors(lua_State *L) {
 	lua_getglobal(L, "COLORS");
 	unsigned int len = lua_get_len(L, -1);
-	if (len != this->states_num) {
+	if (len != this->script_states) {
 		std::cout << "The number of colors doesn't match the number of states";
 		return;
 	}
@@ -171,3 +192,4 @@ void World::SetColors(lua_State *L) {
 		lua_pop(L, 1);
 	}
 }
+*/

@@ -14,7 +14,6 @@ class World {
 
 		void SetNeighborsFromLua(lua_State *L);
 		void SetRules(lua_State *L);
-		void SetColors(lua_State *L);
 
 	public:
 		uint8_t *rules;
@@ -22,7 +21,7 @@ class World {
 
 		unsigned int rules_num;
 		unsigned int neigh_comb_num;
-		unsigned int states_num;
+		unsigned int script_states;
 		unsigned int threads_num;
 
 		World(unsigned int states, uint8_t state, unsigned int height, unsigned int width);

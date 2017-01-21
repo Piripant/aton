@@ -5,6 +5,7 @@
 #include "../automata/world.h"
 #include "console_ui.h"
 #include "graphics.h"
+#include "../io/world_io.h"
 
 using namespace std;
 
@@ -16,48 +17,73 @@ using namespace std;
 #define COMMAND_PARAMETERS World& world, vector<string>& parameters
 
 void print_help(COMMAND_PARAMETERS);
+void print_cmd_help(COMMAND_PARAMETERS);
 void set_state(COMMAND_PARAMETERS);
 void print_state(COMMAND_PARAMETERS);
-void print_max_state(COMMAND_PARAMETERS);
+void print_script_states(COMMAND_PARAMETERS);
 void step(COMMAND_PARAMETERS);
 void print_world(COMMAND_PARAMETERS);
 void print_world_size(COMMAND_PARAMETERS);
 void reset_world(COMMAND_PARAMETERS);
+void set_state_color(COMMAND_PARAMETERS);
 // void load_script(COMMAND_PARAMETERS);
-// void load_world(COMMAND_PARAMETERS);
-void render(COMMAND_PARAMETERS);
+void save_world_cmd(COMMAND_PARAMETERS); // The cmd suffix is to not overlap with save_world from world_io.h
+void load_world_cmd(COMMAND_PARAMETERS); // The cmd suffix is to not overlap with load_world from world_io.h
 
 // This class holds a command
 // The exec_command is a pointer to the function that must be called when the command is called
 struct command {
     string name;
+    string parameters;
     string description;
     unsigned int parameters_num;
     void (*exec_command)(COMMAND_PARAMETERS);
 };
 
 // This array holds all the defined commands of the application
-#define COMMANDS_NUM 9
+#define COMMANDS_NUM 12
 command COMMANDS[COMMANDS_NUM] = {
-    command {"help", "prints all the commands", 0, &print_help},
-    command {"setstate", "takes 3 parameters {x} {y} {new_state}", 3, &set_state},
-    command {"printstate", "takes 2 parameters {x} {y} and prints the state of the cell at {x}, {y}", 2, &print_state},
-    command {"printmaxstate", "takes 0 parameters and prints the number of states defined", 0, &print_max_state},
-    command {"step", "takes 1 parameter {n} and simulates {n} steps", 1, &step},
-    command {"printworld", "takes 0 parameters and prints a graphical rapresentation of the world on the terminal", 0, &print_world},
-    command {"printworldsize", "takes 0 parameters and prints the world size", 0, &print_world_size},
-    command {"resetworld", "takes 3 parameters {width} {height} {state} and sets the world to {width}x{height} and all the cells to {state}", 3, &reset_world},
-    command {"render", "takes 0 parameters and renders the world in a SDL2 window", 0, &render}
+    command {"help", "takes 0 parameters", "prints all the commands", 0, &print_help},
+    command {"cmdhelp", "takes 1 parameter {cmd_name}", "prints the help of the command {cmd_name}", 1, &print_cmd_help},
+    command {"setstate", "takes 3 parameters {x} {y} {new_state}", "sets the state of {x} {y} to {new_state}", 3, &set_state},
+    command {"prnstate", "takes 2 parameters {x} {y}", "prints the state of the cell at {x}, {y}", 2, &print_state},
+    command {"prnsptstates", "takes 0 parameters", "prints the number of states use by the current script", 0, &print_script_states},
+    command {"step", "takes 2 parameters {n} {t}", "simulates {n} steps with a interval of {t} in milliseconds", 2, &step},
+    command {"prnworld", "takes 0 parameters", "prints a graphical rapresentation of the world on the terminal", 0, &print_world},
+    command {"prnworldsize", "takes 0 parameters", "prints the world size", 0, &print_world_size},
+    command {"rstworld", "takes 3 parameters {width} {height} {state}", "sets the world to {width}x{height} and all the cells to {state}", 3, &reset_world},
+    command {"setstateclr", "takes 4 parameters {state} {r} {g} {b}", "sets the {state} color to {r} {g} {b}", 4, &set_state_color},
+    command {"saveworld", "takes 1 parameter {file_name}", "saves the world in {file_name}", 1, &save_world_cmd},
+    command {"loadworld", "takes 1 parameter {file_name}", "load the world in {file_name}", 1, &load_world_cmd}
 };
+
+bool check_num_range(int number, string name, int min_value, int max_value) {    
+    if (number < min_value || number > max_value) {
+        cout << "The " << name << " must be lesser than " << min_value << " and greater than " << max_value << endl;
+        return false;
+    }
+
+    return true;
+}
 
 void print_help(COMMAND_PARAMETERS) {
     cout << endl;
     cout << "Here is a list of all the commands" << endl;
     for (unsigned int i = 0; i < COMMANDS_NUM; i++) {
         cout << "-- " << COMMANDS[i].name << endl;
-        cout << "-->> " << COMMANDS[i].description << endl;
+        cout << "-->> " << COMMANDS[i].parameters << endl;
     }
     cout << endl;
+}
+
+void print_cmd_help(COMMAND_PARAMETERS) {
+    string cmd_name = parameters[1];
+    for (unsigned int i = 0; i < COMMANDS_NUM; i++) {
+        if (COMMANDS[i].name == cmd_name) {
+            cout << "-->> " << COMMANDS[i].parameters << ": " << COMMANDS[i].description << endl;
+            break;
+        }
+    }
 }
 
 void set_state(COMMAND_PARAMETERS) {
@@ -66,8 +92,8 @@ void set_state(COMMAND_PARAMETERS) {
     int state = std::stoi(parameters[3]);
 
     // Check if the state is valid
-    if (state < 0 || state >= world.states_num) {
-        cout << "State must be between 0 and " << world.states_num-1 << " (the declared max state)" << endl;
+    if (state < 0 || state > 255) {
+        cout << "State must be between greater than 0 and lesser than 255" << endl;
         return;
     }
 
@@ -81,21 +107,21 @@ void print_state(COMMAND_PARAMETERS) {
     cout << (unsigned int)world.GetCurrentTable().GetCellState(x, y) << endl;
 }
 
-void print_max_state(COMMAND_PARAMETERS) {
-    cout << world.states_num-1 << endl;
+void print_script_states(COMMAND_PARAMETERS) {
+    cout << world.script_states-1 << endl;
 }
 
-void step_thread(World& world, unsigned int steps, bool& stop) {
+void step_thread(World& world, unsigned int steps, unsigned int sleep, bool& stop) {
     unsigned int hundredth = steps/100;
 
     unsigned int i;
     for (i = 0; i < steps; i++) {
-        if(!stop) {
-            world.Step();
-        }
-        else {
+        if(stop) {
             break;
         }
+
+        world.Step();
+        this_thread::sleep_for(chrono::milliseconds(sleep));
     }
 
     cout << "Finished at step " << i << "/" << steps << ", press enter to continue" << "\r";
@@ -104,8 +130,9 @@ void step_thread(World& world, unsigned int steps, bool& stop) {
 void step(COMMAND_PARAMETERS) {
     cout << "Press enter to stop or continue\r";
     unsigned int steps = std::stoi(parameters[1]);
+    unsigned int sleep = std::stoi(parameters[2]);
     bool stop = false;
-    thread step_t(step_thread, std::ref(world), steps, std::ref(stop));
+    thread step_t(step_thread, std::ref(world), steps, sleep, std::ref(stop));
     
     // TODO: don't use the standard input to wait
     // Wait for the input
@@ -134,12 +161,27 @@ void reset_world(COMMAND_PARAMETERS) {
     unsigned int h = std::stoi(parameters[1]);
     unsigned int w = std::stoi(parameters[2]);
     uint8_t state = std::stoi(parameters[3]);
-
+    cout << (unsigned int)state << endl;
     world.Resize(state, w, h);
 }
 
-void render(COMMAND_PARAMETERS) {
-    draw_world(world);
+void set_state_color(COMMAND_PARAMETERS) {
+    int args[4] = {stoi(parameters[1]), stoi(parameters[2]), stoi(parameters[3]), stoi(parameters[4])};
+    string NAMES[4] = {"state", "r", "g", "b"}; 
+    for (unsigned int i = 0; i < 4; i++) {
+        if (!check_num_range(args[i], NAMES[i], 0, 255)) {
+            return;
+        }
+    }
+    world.colors[args[0]] = {args[1], args[2], args[3]};
+}
+
+void save_world_cmd(COMMAND_PARAMETERS) {
+    save_world(world, parameters[1]);
+}
+
+void load_world_cmd(COMMAND_PARAMETERS) {
+    load_world(world, parameters[1]);
 }
 
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -153,6 +195,7 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
 
 void console_ui_loop(World& world) {  
     cout << "Welcome to aton, a command line interfaced cellular automata simulator" << endl;
+    cout << "Type help to get a full list of the commands" << endl;
     while (true) {
         // Use just cin to read the input
         string input;
