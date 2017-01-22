@@ -4,7 +4,6 @@
 #include <thread>
 #include "../automata/world.h"
 #include "console_ui.h"
-#include "graphics.h"
 #include "../io/world_io.h"
 
 using namespace std;
@@ -26,7 +25,7 @@ void print_world(COMMAND_PARAMETERS);
 void print_world_size(COMMAND_PARAMETERS);
 void reset_world(COMMAND_PARAMETERS);
 void set_state_color(COMMAND_PARAMETERS);
-// void load_script(COMMAND_PARAMETERS);
+void load_script(COMMAND_PARAMETERS);
 void save_world_cmd(COMMAND_PARAMETERS); // The cmd suffix is to not overlap with save_world from world_io.h
 void load_world_cmd(COMMAND_PARAMETERS); // The cmd suffix is to not overlap with load_world from world_io.h
 
@@ -41,7 +40,7 @@ struct command {
 };
 
 // This array holds all the defined commands of the application
-#define COMMANDS_NUM 12
+#define COMMANDS_NUM 13
 command COMMANDS[COMMANDS_NUM] = {
     command {"help", "takes 0 parameters", "prints all the commands", 0, &print_help},
     command {"cmdhelp", "takes 1 parameter {cmd_name}", "prints the help of the command {cmd_name}", 1, &print_cmd_help},
@@ -53,13 +52,14 @@ command COMMANDS[COMMANDS_NUM] = {
     command {"prnworldsize", "takes 0 parameters", "prints the world size", 0, &print_world_size},
     command {"rstworld", "takes 3 parameters {width} {height} {state}", "sets the world to {width}x{height} and all the cells to {state}", 3, &reset_world},
     command {"setcolor", "takes 4 parameters {state} {r} {g} {b}", "sets the {state} color to {r} {g} {b}", 4, &set_state_color},
+    command {"loadscript", "takes 1 parameter {script_name}", "load the script {script_name}", 1, &load_script},
     command {"saveworld", "takes 1 parameter {file_name}", "saves the world in {file_name}", 1, &save_world_cmd},
     command {"loadworld", "takes 1 parameter {file_name}", "load the world in {file_name}", 1, &load_world_cmd}
 };
 
 bool check_num_range(int number, string name, int min_value, int max_value) {    
     if (number < min_value || number > max_value) {
-        cout << "The " << name << " must be lesser than " << min_value << " and greater than " << max_value << endl;
+        cout << "The " << name << " must be lower than " << min_value << " and greater than " << max_value << endl;
         return false;
     }
 
@@ -92,8 +92,7 @@ void set_state(COMMAND_PARAMETERS) {
     int state = std::stoi(parameters[3]);
 
     // Check if the state is valid
-    if (state < 0 || state > 255) {
-        cout << "State must be between greater than 0 and lesser than 255" << endl;
+    if (!check_num_range(state, "state", 0, 255)) {
         return;
     }
 
@@ -160,9 +159,14 @@ void print_world_size(COMMAND_PARAMETERS) {
 void reset_world(COMMAND_PARAMETERS) {
     unsigned int h = std::stoi(parameters[1]);
     unsigned int w = std::stoi(parameters[2]);
-    uint8_t state = std::stoi(parameters[3]);
-    cout << (unsigned int)state << endl;
-    world.Resize(state, w, h);
+    int state = std::stoi(parameters[3]);
+    
+    // Check if the state is valid
+    if (!check_num_range(state, "state", 0, 255)) {
+        return;
+    }
+    
+    world.Resize((uint8_t)state, w, h);
 }
 
 void set_state_color(COMMAND_PARAMETERS) {
@@ -173,7 +177,11 @@ void set_state_color(COMMAND_PARAMETERS) {
             return;
         }
     }
-    world.colors[args[0]] = {args[1], args[2], args[3]};
+    world.colors[args[0]] = {(uint8_t)args[1], (uint8_t)args[2], (uint8_t)args[3]};
+}
+
+void load_script(COMMAND_PARAMETERS) {
+    world.LoadFromFile((char*)parameters[1].c_str());
 }
 
 void save_world_cmd(COMMAND_PARAMETERS) {
