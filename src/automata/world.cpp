@@ -13,7 +13,8 @@ World::World(unsigned int threads, uint8_t state, unsigned int width, unsigned i
 	this->tables[0] = Table(state, width, height);
 	this->tables[1] = Table(state, width, height);
 	this->cur_table = 0;
-
+	this->script_states = 0;
+	this->neighbors_num = 0;
 	// TODO: make so that this array is only for the overwritten colors
 	this->colors = new std::array<uint8_t, 3>[256];
 }
@@ -45,7 +46,7 @@ void World::StepThread(unsigned int start) {
 		uint8_t& future_cell_state = future_table.GetCellState(i);
 
 		// If the cell_state is invalid in the script, make the cell stay the original state
-		if (cell_state > script_states) {
+		if (cell_state >= script_states) {
 			future_cell_state = cell_state;
 			continue;
 		}
@@ -58,7 +59,7 @@ void World::StepThread(unsigned int start) {
 			unsigned int neig_index = x_index + y_index;
 
 			uint8_t& neig_cell_state = curr_table.GetCellState(neig_index);
-			if (neig_cell_state > script_states) { // If the neighbor cell state is invalid in the script, skip this cell
+			if (neig_cell_state >= script_states) { // If the neighbor cell state is invalid in the script, skip this cell
 				valid_neighbors = false; 
 				break;
 			}

@@ -25,6 +25,7 @@ void print_world(COMMAND_PARAMETERS);
 void print_world_size(COMMAND_PARAMETERS);
 void reset_world(COMMAND_PARAMETERS);
 void set_state_color(COMMAND_PARAMETERS);
+void print_colors(COMMAND_PARAMETERS);
 void load_script(COMMAND_PARAMETERS);
 void save_world_cmd(COMMAND_PARAMETERS); // The cmd suffix is to not overlap with save_world from world_io.h
 void load_world_cmd(COMMAND_PARAMETERS); // The cmd suffix is to not overlap with load_world from world_io.h
@@ -40,7 +41,7 @@ struct command {
 };
 
 // This array holds all the defined commands of the application
-#define COMMANDS_NUM 13
+#define COMMANDS_NUM 14
 command COMMANDS[COMMANDS_NUM] = {
     command {"help", "takes 0 parameters", "prints all the commands", 0, &print_help},
     command {"cmdhelp", "takes 1 parameter {cmd_name}", "prints the help of the command {cmd_name}", 1, &print_cmd_help},
@@ -52,9 +53,10 @@ command COMMANDS[COMMANDS_NUM] = {
     command {"prnworldsize", "takes 0 parameters", "prints the world size", 0, &print_world_size},
     command {"rstworld", "takes 3 parameters {width} {height} {state}", "sets the world to {width}x{height} and all the cells to {state}", 3, &reset_world},
     command {"setcolor", "takes 4 parameters {state} {r} {g} {b}", "sets the {state} color to {r} {g} {b}", 4, &set_state_color},
+    command {"prncolors", "takes 0 parameters", "prints all the states and their corresponding color", 0, &print_colors},
     command {"loadscript", "takes 1 parameter {script_name}", "load the script {script_name}", 1, &load_script},
     command {"saveworld", "takes 1 parameter {file_name}", "saves the world in {file_name}", 1, &save_world_cmd},
-    command {"loadworld", "takes 1 parameter {file_name}", "load the world in {file_name}", 1, &load_world_cmd}
+    command {"loadworld", "takes 1 parameter {file_name}", "load the world in {file_name}", 1, &load_world_cmd},
 };
 
 bool check_num_range(int number, string name, int min_value, int max_value) {    
@@ -178,6 +180,19 @@ void set_state_color(COMMAND_PARAMETERS) {
         }
     }
     world.colors[args[0]] = {(uint8_t)args[1], (uint8_t)args[2], (uint8_t)args[3]};
+}
+
+void print_colors(COMMAND_PARAMETERS) {
+    cout << "Default color: black" << endl;
+    for (unsigned int i = 0; i < 255; i++) {
+        uint8_t r = world.colors[i][0];
+        uint8_t g = world.colors[i][1];
+        uint8_t b = world.colors[i][2];
+
+        if (r != 0 || g != 0 || b != 0) {
+            cout << i << ": " << (int)r << " " << (int)g << " " << (int)b << endl;
+        }
+    }
 }
 
 void load_script(COMMAND_PARAMETERS) {

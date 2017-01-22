@@ -22,8 +22,8 @@ void save_world(World& world, std::string file_name) {
     save_file.write((const char*)&table.width, sizeof(table.width));
     save_file.write((const char*)&table.height, sizeof(table.height));
 
-    for (unsigned int x = 0; x < table.width; x++) {
-        for (unsigned int y = 0; y < table.height; y++) {
+    for (unsigned int y = 0; y < table.width; y++) {
+        for (unsigned int x = 0; x < table.height; x++) {
             uint8_t state = table.GetCellState(x, y);
             save_file.write((const char*)&state, sizeof(state));
         }
@@ -62,14 +62,16 @@ void load_world(World& world, std::string file_name) {
 
     unsigned int offset = 8;
     for (unsigned int i = offset; i < world_len+offset; i++) {
-        table.GetCellState(i-8) = static_cast<uint8_t>(buffer[i]);
+        table.GetCellState(i-offset) = static_cast<uint8_t>(buffer[i]);
     }
 
     offset += world_len;
+    unsigned int color_i = 0;
     for (unsigned int i = offset; i < 256*3+offset; i += 3) {
-        world.colors[i-offset][0] = static_cast<uint8_t>(buffer[i]);
-        world.colors[i-offset][1] = static_cast<uint8_t>(buffer[i+1]);
-        world.colors[i-offset][2] = static_cast<uint8_t>(buffer[i+2]);
+        world.colors[color_i][0] = static_cast<uint8_t>(buffer[i]);
+        world.colors[color_i][1] = static_cast<uint8_t>(buffer[i+1]);
+        world.colors[color_i][2] = static_cast<uint8_t>(buffer[i+2]);
+        color_i++;
     }
     
     delete buffer;

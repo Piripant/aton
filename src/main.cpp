@@ -8,8 +8,6 @@
 int main() {
 	World world = World(1, 0, 10, 10);
 
-	world.LoadFromFile("default.lua");
-
 	std::thread console_t(console_ui_loop, std::ref(world));
 
 	draw_world(world);
