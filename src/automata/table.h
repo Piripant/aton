@@ -15,6 +15,7 @@ class Table {
 		inline unsigned int Get_y(unsigned int index);
 		inline uint8_t& GetCellState(unsigned int x, unsigned int y);
 		inline uint8_t& GetCellState(unsigned int index);
+		inline bool SafeSetCell(uint8_t state, unsigned int x, unsigned int y);
 };
 
 inline uint8_t& Table::GetCellState(unsigned int x, unsigned int y) {
@@ -31,4 +32,14 @@ inline unsigned int Table::Get_x(unsigned int index) {
 
 inline unsigned int Table::Get_y(unsigned int index) {
 	return ((index/width + height) % height) * width;
+}
+
+// Return true if the cell is in bounds
+inline bool Table::SafeSetCell(uint8_t state, unsigned int x, unsigned int y) {
+	if (x < width && y < height) {
+		GetCellState(x, y) = state;
+		return true;
+	}
+
+	return false;
 }
