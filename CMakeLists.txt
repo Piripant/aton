@@ -22,3 +22,5 @@ target_link_libraries(Aton GLEW)
 target_link_libraries(Aton GL)
 target_link_libraries(Aton dl)
 target_link_libraries(Aton pthread)
+
+set(CMAKE_BUILD_TYPE Release)

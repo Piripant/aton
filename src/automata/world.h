@@ -25,4 +25,4 @@ namespace World {
 	
 	void SaveWorld(std::string file_name);
 	bool LoadWorld(std::string file_name);
-};
+}
