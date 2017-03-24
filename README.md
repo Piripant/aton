@@ -1,14 +1,15 @@
 # Aton
-Aton is a cross-platform (Windows, Linux, MacOSX) cellular automaton simulator written in modern c++.
+Aton is a cross-platform (Windows, Linux, MacOSX) cellular automaton and finite grid simulator written in modern c++.
 
 ## Features
-* Multithreaded simulations
 * Graphic rapresentation of the world
 * Save/load world files functionality
 * GUI to edit worlds files and run simulations
 * Automaton description via lua scripts
-* Easy automaton description format
-* 8 already included automatons
+* Simple automaton description format
+* Grid scripts to use Aton as a library
+* 10 already included automatons
+* 1 already included grid script
 
 ## Usage
 To compile, just write
@@ -32,11 +33,21 @@ cd bin
 * ImGui (already included)
 
 ## Scripting
-If you wish to program your own automatons, you'll find below everything you need to get started.
+You can program two kind of scripts in Aton: automatons and grids.
 
-A automaton is described in lua script which needs to have the following variables and functions:
+To describe the type of script in the .lua file, a variable named `SCRIPT_TYPE` is used:
 
 ```lua
+SCRIPT_TYPE = "CA" -- For cellular automatas
+SCRIPT_TYPE = "GRID" -- For grids
+```
+
+### Automatons
+
+An automaton is described in lua script which needs to have the following variables and functions:
+
+```lua
+SCRIPT_TYPE = "CA" -- This script is defining a cellular automaton
 NEIGHBORS_POS -- Array of array of integers like { {1, 0}, {-1, 0}, {0, 1}, {0, -1} }
 STATES_NUM -- Integer
 function get_next_state (neighbors, state) -- Needs to return an integer
@@ -53,6 +64,7 @@ The function must return the output state for the combination of neighbors' and 
 
 Here is an example of a script implementing Conway's game of life:
 ```lua
+SCRIPT_TYPE = "CA"
 NEIGHBORS_POS = { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {-1, 1}, {1, -1} }
 STATES_NUM = 2
 
@@ -81,5 +93,43 @@ function get_next_state (neighbors, state)
             return alive
         end
     end
+end
+```
+
+### Grids
+
+Grids scripts use Aton almost as a library, and can be used to program anything that needs a 2D grid.
+
+The script needs only the following function and variable:
+
+```lua
+SCRIPT_TYPE = "GRID" -- This is a grid script
+function step_world() -- A function called to run a step of the simulation
+```
+
+Inside `step_world` you can use multiple functions to modify a cell current a future state:
+
+```lua
+grids.set_current(x, y, state) -- Sets the cell on the current grid at position x, y to state
+grids.set_future(x, y, state) -- Sets the cell on the future grid at position x, y to state
+grids.get_current(x, y) -- Returns the cell state on position x, y in the current grid
+grids.get_future(x, y) -- Return the cell state on position x, y in the future grid
+grids.get_height() -- Returns the grids height
+grids.get_width() -- Returns the grids width
+grids.swap() -- Swaps the current and future tables
+```
+
+Here is an example of a grid script that draws diagonal strapes:
+
+```lua
+SCRIPT_TYPE = "GRID"
+
+x = 0
+y = 0
+
+function world_step ()
+    grids.set_current(x, y, 1)
+    x = (x + 1) % grids.get_width()
+    y = (y + 1) % grids.get_height()
 end
 ```

@@ -1,5 +1,6 @@
-#include <vector>
 #include "table.h"
+
+#include <vector>
 
 
 Table::Table(uint8_t state, unsigned int width, unsigned int height) {

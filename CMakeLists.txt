@@ -11,7 +11,8 @@ file(GLOB_RECURSE sources src/*.cpp)
 file(GLOB_RECURSE ext ext/*.cpp)
 
 include_directories(ext/imgui)
-include_directories(ext/imguifilesystem)
+include_directories(ext/lua)
+include_directories(src)
 link_directories(libs)
 
 add_executable(Aton ${sources} ${ext})

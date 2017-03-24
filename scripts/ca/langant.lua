@@ -1,3 +1,5 @@
+SCRIPT_TYPE = "CA"
+
 NEIGHBORS_POS = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} }
 STATES_NUM = 10
 

@@ -1,11 +1,12 @@
+#include "graphics.h"
+
 #include <iostream>
-#include <thread>
+#include <chrono>
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <imgui.h>
-#include "imgui_impl_sdl_gl3.h"
-#include "graphics.h"
-#include "../automata/world.h"
+#include <graphics/imgui_impl_sdl_gl3.h>
+#include <automata/world.h>
 
 using namespace std;
 
@@ -49,20 +50,7 @@ void put_in_range(int& num, int min, int max) {
 }
 
 
-bool run = false; // The thread is due to stop
-bool stopped = true; // The thread has actually stopped
-int sleep = 100;
-void step_thread() {
-	stopped = false;
-	while (run) {
-		World::Step();
-		if (!run) {
-			break;
-		}
-		this_thread::sleep_for(chrono::milliseconds(sleep));
-	}
-	stopped = true;
-}
+bool run = false; // The simulation is running
 
 inline void simulation_gui() {
 	ImGui::SetNextWindowSize(ImVec2(410, 100), ImGuiSetCond_FirstUseEver);
@@ -70,16 +58,13 @@ inline void simulation_gui() {
 	ImGui::Text("Running: %d", run);
 	ImGui::Text("Generation: %d", generation);
 	ImGui::Checkbox("Update view", (bool*)&update_view);
-	ImGui::InputInt("Time interval (ms)", (int*)&sleep);
-	put_in_range(sleep, 0, 1000000);
 
 	if (ImGui::Button("Step")) {
-		World::Step();
+		World::script->Step();
 		generation++;
 	}
 	if (ImGui::Button("Start")) {
 		run = true;
-		//thread step_t(step_thread, std::ref(world));
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Stop") && run) {
@@ -174,7 +159,7 @@ inline void world_settings_gui(int& selected_state, float *colors) {
 		ImGui::InputText("Script path", script_file_name, 30);
 		if (ImGui::Button("Load file")) {
 			std::cout << get_file_name(script_file_name, 30) << std::endl;
-			World::LoadScript((char*)get_file_name(script_file_name, 30).c_str());
+			World::LoadScript(get_file_name(script_file_name, 30));
 		}
 	}
 	
@@ -275,6 +260,8 @@ void input_loop(SDL_Event& event) {
 	old_mouse_y = mouse_y;
 }
 
+chrono::time_point<chrono::system_clock> start_frame;
+chrono::duration<double> elapsed;
 void draw_world()
 {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
@@ -307,11 +294,16 @@ void draw_world()
 
 			input_loop(event);
 		}
+		
+    	start_frame = chrono::system_clock::now();
+		do {
+			if (run) {
+				World::script->Step();
+				generation++;
+			}
 
-		if (run) {
-			World::Step();
-			generation++;
-		}
+			elapsed = chrono::system_clock::now()-start_frame;
+		} while(elapsed.count() < 0.016);
 
 		unsigned int back_color_8[3] = {(unsigned int)(back_color[0]*255), (unsigned int)(back_color[1]*255), (unsigned int)(back_color[2]*255)};
 		SDL_SetRenderDrawColor(renderer, back_color_8[0], back_color_8[1], back_color_8[2], 255);

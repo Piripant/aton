@@ -1,3 +1,5 @@
+SCRIPT_TYPE = "CA"
+
 NEIGHBORS_POS = { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {-1, 1}, {1, -1} }
 STATES_NUM = 2
 
@@ -14,9 +16,9 @@ function get_next_state (neighbors, state)
     end
 
     if state == alive then
-        return dead
+        return alive
     elseif state == dead then
-        if alive_neigh == 2 then
+        if alive_neigh == 3 then
             return alive
         else
             return dead
