@@ -1,4 +1,8 @@
 SCRIPT_TYPE = "CA"
+TAGS = { 
+    {0, "Dead"}, 
+    {1, "Alive"} 
+}
 
 NEIGHBORS_POS = { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {-1, 1}, {1, -1} }
 STATES_NUM = 2

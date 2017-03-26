@@ -75,7 +75,7 @@ static int GetWidth(lua_State *L) {
 	return 1;
 }
 
-void lua_addfunction(lua_State *L, const char *name, int(f)(lua_State*)) {
+void lua_addfunction(lua_State *L, const char *name, lua_CFunction f) {
 	lua_pushstring(L, name);
 	lua_pushcfunction(L, f);
 	lua_settable(L, -3);
@@ -96,10 +96,4 @@ void GridScript::LoadScript() {
 void GridScript::Step() {
 	lua_getglobal(World::L, "world_step");
 	lua_pcall(World::L, 0, 0, 0);
-}
-
-GridScript::~GridScript() {
-	// unregister the functions
-	lua_pushnil(World::L);
-	lua_setglobal(World::L, "grids");
 }

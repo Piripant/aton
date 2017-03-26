@@ -8,6 +8,7 @@
 #include <fstream>
 #include <automata/scripts/ca_script.h>
 #include <automata/scripts/grid_script.h>
+#include <utils/lua_utils.h>
 
 using namespace std;
 
@@ -19,6 +20,9 @@ namespace World {
 	unsigned int cur_table;
 	
 	std::array<uint8_t, 3> *colors;
+	std::vector< std::tuple<uint8_t, std::string> > states_tags; 
+
+	void LoadTags();
 }
 
 void World::Initialize(uint8_t state, unsigned int width, unsigned int height)
@@ -30,9 +34,6 @@ void World::Initialize(uint8_t state, unsigned int width, unsigned int height)
 	// TODO: make so that this array is only for the overwritten colors
 	colors = new std::array<uint8_t, 3>[256];
 	script = new Script();
-
-	L = luaL_newstate();
-	luaL_openlibs(L);
 }
 
 void World::Resize(uint8_t state, unsigned int width, unsigned int height) {
@@ -52,8 +53,35 @@ void World::SwapTables() {
 	cur_table = (cur_table + 1) % 2;
 }
 
+void World::LoadTags() {
+	lua_getglobal(L, "TAGS");
+	
+	if (lua_istable(L, -1)) {
+		unsigned int len = luaU_get_len(World::L, -1);
+		cout << len << endl;
+		for (unsigned int i = 1; i <= len; i++) {
+			luaU_get_at_index(L, i); // Get the couple of {state, tag}
+
+			luaU_get_at_index(L, 1); // Get the state
+			int state = luaU_get_integer(L, -1);
+			luaU_get_at_index(L, 2); // Get the tag
+			string tag = luaU_get_string(L, -1);
+
+			auto tag_tuple = make_tuple(state, tag);
+			
+			states_tags.push_back(tag_tuple);
+			
+			lua_pop(L, 1); // Remove the {state, tag} couple
+		}
+	}
+
+	lua_pop(L, 1);
+}
+
 void World::LoadScript(string file_name) {
-	lua_settop(L, 0); // Clear the stack
+	// Reset the Lua VM
+	L = luaL_newstate();
+	luaL_openlibs(L);
 
 	int status = luaL_loadfile(L, file_name.c_str());
 	if (status) {
@@ -67,10 +95,11 @@ void World::LoadScript(string file_name) {
 		return;
 	}
 
-	// lua_pop(L, 1); // Dump the script return value
+	states_tags.clear();
+	LoadTags();
 
 	lua_getglobal(L, "SCRIPT_TYPE");
-	string script_type = lua_tostring(L, -1);
+	string script_type = luaU_get_string(L, -1);
 
 	delete script;
 	if (script_type == "CA") {
@@ -102,7 +131,7 @@ int buff_to_integer(char *buffer, unsigned int offset) {
 void World::SaveWorld(std::string file_name) {
 	ofstream save_file;
 	Table& table = GetCurrentTable();
-	
+
 	save_file.open(file_name + ".atonw", ios::binary);
 
 	save_file.write((const char*)&table.width, sizeof(table.width));

@@ -1,4 +1,9 @@
 SCRIPT_TYPE = "CA"
+TAGS = { 
+    {0, "Resting"}, 
+    {1, "Refractoring"},
+    {2, "Exited"} 
+}
 
 NEIGHBORS_POS = { {1, 0}, {-1, 0}, {0, 1}, {0, -1} }
 STATES_NUM = 3

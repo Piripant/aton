@@ -1,4 +1,8 @@
 SCRIPT_TYPE = "GRID"
+TAGS = {
+    {0, "Empty"},
+    {1, "Strape"}
+}
 
 x = 0
 y = 0

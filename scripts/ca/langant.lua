@@ -1,4 +1,16 @@
 SCRIPT_TYPE = "CA"
+TAGS = { 
+    {0, "Empty"}, 
+    {1, "Full"},
+    {2, "Empty up ant"},
+    {3, "Empty right ant"},
+    {4, "Empty down ant"},
+    {5, "Empty left ant"},
+    {6, "Full up ant"},
+    {7, "Full right ant"},
+    {8, "Full down ant"},
+    {9, "Full left ant"} 
+}
 
 NEIGHBORS_POS = { {0, 1}, {1, 0}, {0, -1}, {-1, 0} }
 STATES_NUM = 10

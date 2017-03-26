@@ -4,7 +4,6 @@
 
 class GridScript : public Script {
 	public:
-		~GridScript();
 		void Step();
 		void LoadScript();
 };

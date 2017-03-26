@@ -160,6 +160,7 @@ inline void world_settings_gui(int& selected_state, float *colors) {
 		if (ImGui::Button("Load file")) {
 			std::cout << get_file_name(script_file_name, 30) << std::endl;
 			World::LoadScript(get_file_name(script_file_name, 30));
+			generation = 0;
 		}
 	}
 	
@@ -176,6 +177,27 @@ inline void pen_gui() {
 	ImGui::End();
 }
 
+inline void script_info() {
+	ImGui::SetNextWindowSize(ImVec2(500,100), ImGuiSetCond_FirstUseEver);
+	ImGui::Begin("Script info");
+
+	if (ImGui::CollapsingHeader("States tags")) {
+		ImGui::Columns(2, "StatesTag"); // 2-ways, with border
+		ImGui::Separator();
+		ImGui::Text("State"); ImGui::NextColumn();
+		ImGui::Text("Tag"); ImGui::NextColumn();
+		ImGui::Separator();
+		for (auto state_tag : World::states_tags) {
+			ImGui::Text("%d", get<uint8_t>(state_tag)); ImGui::NextColumn();
+			ImGui::Text("%s", get<string>(state_tag).c_str()); ImGui::NextColumn();
+		}
+		ImGui::Columns(1);
+		ImGui::Separator();
+	}
+	
+	ImGui::End();
+}
+
 void update_gui(SDL_Window *window) {
 	static int selected_state = 0;
 	static float colors[3] = {0, 0, 0};
@@ -184,6 +206,7 @@ void update_gui(SDL_Window *window) {
 	world_settings_gui(selected_state, (float*)colors);
 	simulation_gui();
 	pen_gui();
+	script_info();
 
 	if (show_world_dialog) {
 		new_world_dialog();

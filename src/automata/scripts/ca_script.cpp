@@ -27,30 +27,29 @@ uint8_t calculate_output_state(uint8_t *combination, unsigned int combination_le
 	lua_getglobal(World::L, "get_next_state"); // The function
 	lua_newtable(World::L);
 	for (int i = 0; i < combination_len; i++) {
-		lua_add_to_table(World::L, i+1, combination[i]);
+		luaU_add_to_table(World::L, i+1, combination[i]);
 	}
 
 	lua_pushinteger(World::L, (int)input_state); // The cell state
 	lua_pcall(World::L, 2, 1, 0); // Also pops the function + arguments
-	int next_state = lua_tointeger(World::L, -1);
-	lua_pop(World::L, 1);
+	int next_state = luaU_get_integer(World::L, -1);
 	
 	return next_state;
 }
 
 void CAScript::SetNeighbors() {
 	lua_getglobal(World::L, "NEIGHBORS_POS"); // Get the table
-	unsigned int len = lua_get_len(World::L, -1);
+	unsigned int len = luaU_get_len(World::L, -1);
 
 	neighbors = new int[len][2];
 	neighbors_num = len;
 
 	for (unsigned int i = 1; i <= len; i++) {
-		lua_get_at_index(World::L, i);
+		luaU_get_at_index(World::L, i);
 
 		for (unsigned int n = 1; n <= 2; n++) {
-			lua_get_at_index(World::L, n);
-			neighbors[i-1][n-1] = lua_get_integer(World::L, -1);
+			luaU_get_at_index(World::L, n);
+			neighbors[i-1][n-1] = luaU_get_integer(World::L, -1);
 		}
 
 		lua_pop(World::L, 1); // To clear the stack
@@ -72,8 +71,7 @@ void increment_number(unsigned int len, unsigned int base, uint8_t *number) {
 
 void CAScript::SetRules() {
 	lua_getglobal(World::L, "STATES_NUM");
-	states_num = lua_tointeger(World::L, -1);
-	lua_pop(World::L, 1);
+	states_num = luaU_get_integer(World::L, -1);
 
 	neigh_comb_num = pow(states_num, neighbors_num);
 	rules_num = pow(states_num, neighbors_num + 1);

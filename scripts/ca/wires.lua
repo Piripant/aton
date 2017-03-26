@@ -1,4 +1,10 @@
 SCRIPT_TYPE = "CA"
+TAGS = { 
+    {0, "Empty"}, 
+    {1, "Wire"},
+    {2, "Electron head"},
+    {3, "Electron tail"} 
+}
 
 NEIGHBORS_POS = { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, -1}, {-1, 1}, {1, -1} }
 STATES_NUM = 4

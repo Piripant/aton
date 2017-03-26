@@ -1,4 +1,9 @@
 SCRIPT_TYPE = "CA"
+TAGS = { 
+    {0, "Empty"}, 
+    {1, "Red car"},
+    {2, "Blue car"} 
+}
 
 NEIGHBORS_POS = { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {-1, -1} }
 STATES_NUM = 3
