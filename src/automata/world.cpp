@@ -80,6 +80,7 @@ void World::LoadTags() {
 
 void World::LoadScript(string file_name) {
 	// Reset the Lua VM
+	lua_close(L);
 	L = luaL_newstate();
 	luaL_openlibs(L);
 
